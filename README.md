@@ -48,6 +48,12 @@ $ kdl-fmt --to-v2 ./path/to/file.kdl
 # remove comments
 $ kdl-fmt --strip-comments ./path/to/file.kdl
 
+# validate kdl v1
+$ kdl-fmt --from-v1 --no-format ./path/to/file.kdl
+
+# validate kdl v2
+$ kdl-fmt --from-v2 --no-format ./path/to/file.kdl
+
 # print help
 $ kdl-fmt --help
 ```
