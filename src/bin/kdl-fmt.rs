@@ -2,7 +2,7 @@ use std::fs;
 
 use clap::Parser;
 use clap_stdin::FileOrStdin;
-use kdl_fmt::kdl;
+use kdl_fmt::kdl::{self, FormatOptions};
 use miette::{bail, IntoDiagnostic, Result};
 use tracing_subscriber::EnvFilter;
 
@@ -71,13 +71,15 @@ fn main() -> Result<()> {
 
     let formatted_content = kdl::format_document(
         &content,
-        args.strip_comments,
-        args.indent_level,
-        args.to_v1,
-        args.to_v2,
-        args.no_format,
-        args.from_v1,
-        args.from_v2,
+        &FormatOptions {
+            from_v1: args.from_v1,
+            from_v2: args.from_v2,
+            to_v1: args.to_v1,
+            to_v2: args.to_v2,
+            no_format: args.no_format,
+            strip_comments: args.strip_comments,
+            indent_level: args.indent_level,
+        },
     )?;
 
     if args.input.is_file() && args.in_place {

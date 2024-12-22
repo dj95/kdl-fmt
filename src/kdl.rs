@@ -7,19 +7,15 @@ enum KdlVersion {
     V2,
 }
 
-fn parse_document(
-    input: &str,
-    from_v1: bool,
-    from_v2: bool,
-) -> Result<(KdlDocument, KdlVersion)> {
+fn parse_document(input: &str, from_v1: bool, from_v2: bool) -> Result<(KdlDocument, KdlVersion)> {
     if from_v1 {
-        let doc = KdlDocument::parse_v1(&input)?;
+        let doc = KdlDocument::parse_v1(input)?;
 
         return Ok((doc, KdlVersion::V1));
     }
 
     if from_v2 {
-        let doc = KdlDocument::parse_v2(&input)?;
+        let doc = KdlDocument::parse_v2(input)?;
 
         return Ok((doc, KdlVersion::V2));
     }
@@ -37,45 +33,55 @@ fn parse_document(
     Ok((doc, version))
 }
 
-pub fn format_document(
-    input: &str,
-    strip_comments: bool,
-    indent_level: Option<usize>,
-    to_v1: bool,
-    to_v2: bool,
-    no_format: bool,
-    from_v1: bool,
-    from_v2: bool,
-) -> Result<String> {
-    if to_v1 && to_v2 {
+pub struct FormatOptions {
+    // input format
+    pub from_v1: bool,
+    pub from_v2: bool,
+
+    // output format
+    pub to_v1: bool,
+    pub to_v2: bool,
+
+    // dry-run for validation only
+    pub no_format: bool,
+
+    // further formatting options
+    pub strip_comments: bool,
+    pub indent_level: Option<usize>,
+}
+
+pub fn format_document(input: &str, options: &FormatOptions) -> Result<String> {
+    if options.to_v1 && options.to_v2 {
         bail!("Cannot output in v1 and v2 spec at the same time");
     }
 
-    let parser_result = parse_document(input, from_v1, from_v2)?;
+    let parser_result = parse_document(input, options.from_v1, options.from_v2)?;
     let mut doc = parser_result.0;
     let version = parser_result.1;
 
     tracing::debug!("{version:?}");
 
-    let indent_level = match indent_level {
+    let indent_level = match options.indent_level {
         Some(level) => " ".repeat(level),
         None => " ".repeat(4),
     };
 
     let fmt_config = FormatConfigBuilder::new()
-        .no_comments(strip_comments)
+        .no_comments(options.strip_comments)
         .indent(&indent_level);
 
-    if !no_format {
+    if !options.no_format {
         doc.autoformat_config(&fmt_config.build());
     }
 
-    if (version == KdlVersion::V2 && to_v1) || (version == KdlVersion::V1 && !to_v2) {
+    if (version == KdlVersion::V2 && options.to_v1) || (version == KdlVersion::V1 && !options.to_v2)
+    {
         tracing::debug!("ensure_v1");
         doc.ensure_v1();
     }
 
-    if (version == KdlVersion::V1 && to_v2) || (version == KdlVersion::V2 && !to_v1) {
+    if (version == KdlVersion::V1 && options.to_v2) || (version == KdlVersion::V2 && !options.to_v1)
+    {
         tracing::debug!("ensure_v2");
         doc.ensure_v2();
     }
@@ -158,7 +164,18 @@ child #true
         #[case] v2: bool,
         #[case] exp: &str,
     ) {
-        let res = format_document(input, false, None, v1, v2, false, false, false);
+        let res = format_document(
+            input,
+            &FormatOptions {
+                from_v1: false,
+                from_v2: false,
+                to_v1: v1,
+                to_v2: v2,
+                no_format: false,
+                strip_comments: false,
+                indent_level: None,
+            },
+        );
 
         tracing::debug!("{res:?}");
         assert!(res.is_ok());
