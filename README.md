@@ -13,6 +13,9 @@
   <br><br>
   A small formatting utility around the awesome [kdl-rs](https://github.com/kdl-org/kdl-rs) crate for formatting
   KDL files. It is also capable of converting KDL v1 to v2 documents and vice versa.
+
+  *kdl-fmt* will try to detect the input KDL version, in case it is not specified. It will also use the input
+  KDL version as the target version, if there's no target version specified.
 </p>
 
 ## 📦 Requirements
