@@ -35,6 +35,19 @@ struct Args {
     #[arg(short, long, help = "Number of spaces to indent")]
     indent_level: Option<usize>,
 
+    #[arg(
+        short,
+        long,
+        default_value_t = false,
+        help = "Just parse and validate the document"
+    )]
+    no_format: bool,
+
+    #[arg(long, default_value_t = false, help = "Force to use the v1 parser")]
+    from_v1: bool,
+    #[arg(long, default_value_t = false, help = "Force to use the v2 parser")]
+    from_v2: bool,
+
     #[arg(help = "Filename or - to fetch input from STDIN")]
     input: FileOrStdin,
 }
@@ -62,6 +75,9 @@ fn main() -> Result<()> {
         args.indent_level,
         args.to_v1,
         args.to_v2,
+        args.no_format,
+        args.from_v1,
+        args.from_v2,
     )?;
 
     if args.input.is_file() && args.in_place {
