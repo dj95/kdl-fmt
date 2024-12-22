@@ -1,0 +1,13 @@
+// Configuration related to the GitLab instance
+gitlab {// Host to the GitLab instance without the protocol
+host "host_val"
+// Personal Access Token with at least api & write_repository permissions
+token "token_val"
+
+bool_test null
+}
+
+// Configuration for the local environment
+local {// Directory, where the project tree should start
+project_dir "/Users/daniel/Developer"
+}
