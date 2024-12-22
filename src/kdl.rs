@@ -8,6 +8,10 @@ enum KdlVersion {
 }
 
 fn parse_document(input: &str, from_v1: bool, from_v2: bool) -> Result<(KdlDocument, KdlVersion)> {
+    if from_v1 && from_v2 {
+        bail!("Cannot parse document with v1 and v2 parser at the same time");
+    }
+
     if from_v1 {
         let doc = KdlDocument::parse_v1(input)?;
 
