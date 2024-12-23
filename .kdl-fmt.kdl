@@ -1,0 +1,13 @@
+// Assume the input version
+// Available values: "auto", "v1", "v2"
+assume_version "v1"
+
+// Configure whether to ensure a specific version on the output or not
+// Available values: "off", "v1", "v2"
+ensure_version "v2"
+
+// Remove all comments
+strip_comments #false
+
+// Count of spaces to use for indentation
+indent_level 4
