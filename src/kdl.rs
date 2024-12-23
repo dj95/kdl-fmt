@@ -1,74 +1,51 @@
 use kdl::{FormatConfigBuilder, KdlDocument};
-use miette::{bail, Result};
+use miette::Result;
 
-#[derive(PartialEq, Eq, Debug)]
-enum KdlVersion {
+#[derive(PartialEq, Eq, Debug, Copy, Clone)]
+pub enum KdlVersion {
     V1,
     V2,
 }
 
-fn parse_document(input: &str, from_v1: bool, from_v2: bool) -> Result<(KdlDocument, KdlVersion)> {
-    if from_v1 && from_v2 {
-        bail!("Cannot parse document with v1 and v2 parser at the same time");
-    }
-
-    if from_v1 {
-        let doc = KdlDocument::parse_v1(input)?;
-
-        return Ok((doc, KdlVersion::V1));
-    }
-
-    if from_v2 {
-        let doc = KdlDocument::parse_v2(input)?;
-
-        return Ok((doc, KdlVersion::V2));
-    }
-
-    // auto detect
-    let mut version: KdlVersion = KdlVersion::V2;
-    let doc = match KdlDocument::parse_v1(input).is_ok() {
-        true => {
-            version = KdlVersion::V1;
-            KdlDocument::parse_v1(input)?
-        }
-        false => KdlDocument::parse_v2(input)?,
+fn parse_document(
+    input: &str,
+    assume_version: &Option<KdlVersion>,
+) -> Result<(KdlDocument, KdlVersion)> {
+    let version = match assume_version {
+        Some(version) => *version,
+        None => match KdlDocument::parse_v1(input) {
+            Ok(_) => KdlVersion::V1,
+            Err(_) => KdlVersion::V2,
+        },
     };
 
-    Ok((doc, version))
+    match version {
+        KdlVersion::V1 => Ok((KdlDocument::parse_v1(input)?, KdlVersion::V1)),
+        KdlVersion::V2 => Ok((KdlDocument::parse_v2(input)?, KdlVersion::V2)),
+    }
 }
 
 pub struct FormatOptions {
     // input format
-    pub from_v1: bool,
-    pub from_v2: bool,
-
-    // output format
-    pub to_v1: bool,
-    pub to_v2: bool,
+    pub assume_version: Option<KdlVersion>,
+    pub ensure_version: Option<KdlVersion>,
 
     // dry-run for validation only
     pub no_format: bool,
 
     // further formatting options
     pub strip_comments: bool,
-    pub indent_level: Option<usize>,
+    pub indent_level: usize,
 }
 
 pub fn format_document(input: &str, options: &FormatOptions) -> Result<String> {
-    if options.to_v1 && options.to_v2 {
-        bail!("Cannot output in v1 and v2 spec at the same time");
-    }
-
-    let parser_result = parse_document(input, options.from_v1, options.from_v2)?;
+    let parser_result = parse_document(input, &options.assume_version)?;
     let mut doc = parser_result.0;
     let version = parser_result.1;
 
     tracing::debug!("{version:?}");
 
-    let indent_level = match options.indent_level {
-        Some(level) => " ".repeat(level),
-        None => " ".repeat(4),
-    };
+    let indent_level = " ".repeat(options.indent_level);
 
     let fmt_config = FormatConfigBuilder::new()
         .no_comments(options.strip_comments)
@@ -78,16 +55,18 @@ pub fn format_document(input: &str, options: &FormatOptions) -> Result<String> {
         doc.autoformat_config(&fmt_config.build());
     }
 
-    if (version == KdlVersion::V2 && options.to_v1) || (version == KdlVersion::V1 && !options.to_v2)
-    {
-        tracing::debug!("ensure_v1");
-        doc.ensure_v1();
-    }
-
-    if (version == KdlVersion::V1 && options.to_v2) || (version == KdlVersion::V2 && !options.to_v1)
-    {
-        tracing::debug!("ensure_v2");
-        doc.ensure_v2();
+    match options.ensure_version {
+        Some(KdlVersion::V1) => {
+            doc.ensure_v1();
+        }
+        Some(KdlVersion::V2) => {
+            doc.ensure_v2();
+        }
+        _ => match version {
+            // use the detected format, if no conversion is required
+            KdlVersion::V1 => doc.ensure_v1(),
+            KdlVersion::V2 => doc.ensure_v2(),
+        },
     }
 
     Ok(doc.to_string())
@@ -105,8 +84,7 @@ world prop="value" {
 child 1
 child 2
 }"#,
-        false,
-        false,
+        None,
         r#"world prop="value" {
     child 1
     child 2
@@ -120,8 +98,7 @@ child 1
 // some comment
 child 2
 }"#,
-        false,
-        false,
+        None,
         r#"world prop="value" {
     child 1
     // some comment
@@ -136,8 +113,7 @@ child null
 // some comment
 child 2
 }"#,
-        false,
-        true,
+        Some(KdlVersion::V2),
         r#"world prop=value {
     child #null
     // some comment
@@ -152,8 +128,7 @@ child #null
 // some comment
 child #true
 }"#,
-        true,
-        false,
+        Some(KdlVersion::V1),
         r#"world prop="value" {
     child null
     // some comment
@@ -164,20 +139,17 @@ child #true
     #[test_log::test]
     fn test_format_document(
         #[case] input: &str,
-        #[case] v1: bool,
-        #[case] v2: bool,
+        #[case] ensure_version: Option<KdlVersion>,
         #[case] exp: &str,
     ) {
         let res = format_document(
             input,
             &FormatOptions {
-                from_v1: false,
-                from_v2: false,
-                to_v1: v1,
-                to_v2: v2,
+                ensure_version,
+                assume_version: None,
                 no_format: false,
                 strip_comments: false,
-                indent_level: None,
+                indent_level: 4,
             },
         );
 
