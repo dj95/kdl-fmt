@@ -28,7 +28,7 @@
 
 ## 🚀 Getting Started
 
-Clone the repository and run `cargo build -r`. Then copy the binary from `./target/release/kdl-fmt` somewhere into your `$PATH` (e.g. `/usr/local/bin` on Linux).
+Download the binary for your platform from the [GitHub Releases](https://github.com/dj95/kdl-fmt/releases) or lone the repository and run `cargo build -r`. Then copy the binary somewhere into your `$PATH` (e.g. `/usr/local/bin` on Linux).
 
 Afterwards you can use *kdl-fmt* in your terminal:
 
@@ -59,6 +59,30 @@ $ kdl-fmt --from-v2 --no-format ./path/to/file.kdl
 
 # print help
 $ kdl-fmt --help
+```
+
+## ⚙️ Configuration
+
+Besides configuring certain formatting options with arguments of the CLI, *kdl-fmt* also respects a configuration file
+within the directory where *kdl-fmt* is executed, to configure project specific formatting options. Please bear in mind, that CLI arguments
+will override options from the configuration file.
+
+To start with the configuration file, add a `.kdl-fmt.kdl` to to the directory you run *kdl-fmt* in, with the following content:
+
+```javascript
+// Assume the input version
+// Available values: "auto", "v1", "v2"
+assume_version "v1"
+
+// Configure whether to ensure a specific version on the output or not
+// Available values: "off", "v1", "v2"
+ensure_version "v2"
+
+// Remove all comments
+strip_comments #false
+
+// Count of spaces to use for indentation
+indent_level 4
 ```
 
 ## 🤝 Contributing
