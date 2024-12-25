@@ -88,8 +88,8 @@ jobs:
         id: archive-binary
         working-directory: ./target/${{ matrix.target }}/release
         run: |
-          tar cvzj "kdl-fmt.${{ matrix.target }}.gz" kdl-fmt
-          echo "::set-output name=name::kdl-fmt.${{ matrix.target }}.gz"
+          tar cvzf "kdl-fmt.${{ matrix.target }}.gz" kdl-fmt
+          echo "name=kdl-fmt.${{ matrix.target }}.gz >> $GITHUB_OUTPUT"
 
       - name: Upload binary file to release
         uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
