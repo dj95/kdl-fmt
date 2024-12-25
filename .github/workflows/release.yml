@@ -1,0 +1,118 @@
+---
+name: Release
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-tags: false # https://github.com/actions/checkout/issues/1467
+
+      - run: git fetch --tags --all --force && git pull origin ${{ github.ref }}  --unshallow --force
+        name: Fetch tags manually as a workaround. See https://github.com/actions/checkout/issues/1467
+
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@4a4a951bc43fafe41cd2348d181853f52356bee7 # v3
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: -vv --latest --strip header
+        env:
+          OUTPUT: CHANGES.md
+
+      - name: Create release
+        id: create_release
+        uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          body: ${{ steps.git-cliff.outputs.content }}
+          prerelease: false
+
+  build-release:
+    name: build-release
+    runs-on: ${{ matrix.runs-on }}
+    needs: create-release
+    env:
+      RUST_BACKTRACE: 1
+    strategy:
+      matrix:
+        build:
+          - 'linux musl x64'
+          - 'linux musl aarch64'
+          - 'darwin x64'
+          - 'darwin aarch64'
+        include:
+          - build: 'linux musl x64'
+            runs-on: 'ubuntu-latest'
+            target: 'x86_64-unknown-linux-musl'
+          - build: 'linux musl aarch64'
+            runs-on: 'ubuntu-latest'
+            target: 'aarch64-unknown-linux-musl'
+          - build: 'darwin x64'
+            runs-on: 'macos-latest'
+            target: 'x86_64-apple-darwin'
+          - build: 'darwin aarch64'
+            runs-on: 'macos-latest'
+            target: 'aarch64-apple-darwin'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-tags: false # https://github.com/actions/checkout/issues/1467
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4f647fc679bcd3b11499ccb42104547c83dabe96 # stable
+        with:
+          toolchain: '1.83.0'
+          target: ${{ matrix.target }}
+
+      - name: Install musl-tools
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y --no-install-recommends musl-tools
+
+      - name: Install aarch linker
+        if: matrix.target == 'aarch64-unknown-linux-musl'
+        run: sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create checksum
+        id: checksum
+        working-directory: ./target/${{ matrix.target }}/release
+        run: |
+          name="kdl-fmt.${{ matrix.target }}.sha256sum"
+          if [[ "$RUNNER_OS" != "macOS" ]]; then
+            sha256sum "kdl-fmt" > "${name}"
+          else
+            shasum -a 256 "kdl-fmt" > "${name}"
+          fi
+          echo "name=${name}" >> $GITHUB_OUTPUT
+
+      - name: Archive binary
+        id: archive-binary
+        working-directory: ./target/${{ matrix.target }}/release
+        run: |
+          tar cvzf "kdl-fmt.${{ matrix.target }}.tar.gz" kdl-fmt
+          echo "name=kdl-fmt.${{ matrix.target }}.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Upload binary file to release
+        uses: softprops/action-gh-release@01570a1f39cb168c169c802c3bceb9e93fb10974 # v2.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          files: |
+            ./target/${{ matrix.target }}/release/${{ steps.archive-binary.outputs.name }}
+            ./target/${{ matrix.target }}/release/${{ steps.checksum.outputs.name }}
