@@ -98,11 +98,9 @@ jobs:
           echo "name=kdl-fmt.${{ matrix.target }}.tar.gz" >> $GITHUB_OUTPUT
 
       - name: Upload binary file to release
-        uses: actions/upload-release-asset@e8f9f06c4b078e705bd2ea027f0926603fc9b4d5 # v1.0.2
+        uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # v2.2.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./target/${{ matrix.target }}/release/${{ steps.archive-binary.outputs.name }}
-          asset_name: kdl-fmt.${{ matrix.target }}.tar.gz
-          asset_content_type: application/octet-stream
+          draft: true
+          files: ./target/${{ matrix.target }}/release/${{ steps.archive-binary.outputs.name }}
