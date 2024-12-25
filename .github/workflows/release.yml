@@ -8,7 +8,6 @@ on:
 
 jobs:
   create-release:
-    name: create-release
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -32,12 +31,12 @@ jobs:
 
       - name: Create release
         id: create_release
-        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # v1
+        uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # v2.2.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && '' || github.ref }}
-          release_name: Release ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
+          name: Release ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
           draft: true
           body: ${{ steps.git-cliff.outputs.content }}
           prerelease: false
@@ -45,6 +44,7 @@ jobs:
   build-release:
     name: build-release
     runs-on: ${{ matrix.runs-on }}
+    needs: create-release
     env:
       RUST_BACKTRACE: 1
     strategy:
@@ -67,7 +67,6 @@ jobs:
           - build: 'darwin aarch64'
             runs-on: 'macos-latest'
             target: 'aarch64-apple-darwin'
-    needs: create-release
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -97,7 +96,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
           asset_path: ./target/${{ matrix.target }}/release/${{ steps.achive-binary.outputs.name }}
           asset_name: zjstatus.wasm
           asset_content_type: application/octet-stream
