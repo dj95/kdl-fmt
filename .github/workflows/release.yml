@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-tags: false # https://github.com/actions/checkout/issues/1467
 
-      - run: git fetch --tags --all --force
+      - run: git fetch --tags --all --force && git pull --unshallow --force
         name: Fetch tags manually as a workaround. See https://github.com/actions/checkout/issues/1467
 
       - name: Generate a changelog
@@ -67,6 +67,7 @@ jobs:
           - build: 'darwin aarch64'
             runs-on: 'macos-latest'
             target: 'aarch64-apple-darwin'
+    needs: create-release
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
