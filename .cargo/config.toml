@@ -1,2 +1,2 @@
-[target aarch64-unknown-linux-musl]
+[target.aarch64-unknown-linux-musl]
 rustflags = ["-lgcc"]
