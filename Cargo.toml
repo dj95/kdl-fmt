@@ -1,5 +1,8 @@
 [package]
 name = "kdl-fmt"
+description = "Formatting CLI for KDL (v1 & v2) built around kdl-rs"
+license = "MIT"
+license-file = "LICENSE"
 version = "0.1.0"
 edition = "2021"
 
