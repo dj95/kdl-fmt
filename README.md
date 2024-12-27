@@ -30,6 +30,8 @@
 
 Download the binary for your platform from the [GitHub Releases](https://github.com/dj95/kdl-fmt/releases) or lone the repository and run `cargo build -r`. Then copy the binary somewhere into your `$PATH` (e.g. `/usr/local/bin` on Linux).
 
+As an alternative, you can simply run `cargo install kdl-fmt`.
+
 Afterwards you can use *kdl-fmt* in your terminal:
 
 ```bash
