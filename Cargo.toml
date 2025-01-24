@@ -14,7 +14,7 @@ clap-stdin = "0.5.1"
 kdl = { version = "6.2.2", features = ["v1", "v1-fallback"] }
 miette = { version = "7.2.0", features = ["fancy"] }
 rstest = "0.24.0"
-test-log = { version = "0.2.16", features = ["trace"] }
+test-log = { version = "0.2.17", features = ["trace"] }
 thiserror = "2.0.11"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
