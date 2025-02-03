@@ -10,7 +10,7 @@ name = "kdl-fmt"
 
 [dependencies]
 clap = { version = "4.5.26", features = ["derive"] }
-clap-stdin = "0.5.1"
+clap-stdin = "0.6.0"
 kdl = { version = "6.3.3", features = ["v1", "v1-fallback"] }
 miette = { version = "7.5.0", features = ["fancy"] }
 rstest = "0.24.0"
