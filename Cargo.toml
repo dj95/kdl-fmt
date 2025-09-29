@@ -15,6 +15,6 @@ kdl = { version = "6.3.4", features = ["v1", "v1-fallback"] }
 miette = { version = "7.6.0", features = ["fancy"] }
 rstest = "0.26.1"
 test-log = { version = "0.2.18", features = ["trace"] }
-thiserror = "2.0.16"
+thiserror = "2.0.17"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
