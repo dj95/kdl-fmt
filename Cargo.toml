@@ -9,7 +9,7 @@ edition = "2021"
 name = "kdl-fmt"
 
 [dependencies]
-clap = { version = "4.5.49", features = ["derive"] }
+clap = { version = "4.5.50", features = ["derive"] }
 clap-stdin = "0.7.0"
 kdl = { version = "6.5.0", features = ["v1", "v1-fallback"] }
 miette = { version = "7.6.0", features = ["fancy"] }
